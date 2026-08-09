@@ -15,10 +15,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ===== 1. EDITA ESTA LISTA CADA SEMANA =====
-// `inicio` es la fecha/hora real del partido (formato ISO). La etiqueta visible se genera sola.
-const PARTIDOS = [
-    // --- Liga MX ---
+// ===== Jornada de ejemplo (para el botón "Cargar jornada de ejemplo") =====
+const PARTIDOS_EJEMPLO = [
     { id: 1,  liga: "Liga MX", inicio: "2026-10-23T19:00:00", local: "Necaxa",         visitante: "Toluca" },
     { id: 2,  liga: "Liga MX", inicio: "2026-10-23T21:00:00", local: "América",        visitante: "Cruz Azul" },
     { id: 3,  liga: "Liga MX", inicio: "2026-10-24T19:00:00", local: "León",           visitante: "Toluca" },
@@ -28,7 +26,6 @@ const PARTIDOS = [
     { id: 7,  liga: "Liga MX", inicio: "2026-10-25T17:00:00", local: "América",        visitante: "Pachuca" },
     { id: 8,  liga: "Liga MX", inicio: "2026-10-25T19:00:00", local: "Querétaro",      visitante: "Juárez" },
     { id: 9,  liga: "Liga MX", inicio: "2026-10-25T21:00:00", local: "Tijuana",        visitante: "Santos Laguna" },
-    // --- La Liga (Jornada 1) ---
     { id: 10, liga: "La Liga", inicio: "2026-08-15T11:30:00", local: "Deportivo Alavés", visitante: "Getafe" },
     { id: 11, liga: "La Liga", inicio: "2026-08-15T13:30:00", local: "Sevilla",         visitante: "Rayo Vallecano" },
     { id: 12, liga: "La Liga", inicio: "2026-08-16T09:00:00", local: "Racing",          visitante: "Villarreal" },
@@ -36,7 +33,6 @@ const PARTIDOS = [
     { id: 14, liga: "La Liga", inicio: "2026-08-16T13:30:00", local: "Celta de Vigo",   visitante: "Osasuna" },
     { id: 15, liga: "La Liga", inicio: "2026-08-26T13:00:00", local: "Real Madrid",     visitante: "Real Sociedad" },
     { id: 16, liga: "La Liga", inicio: "2026-08-27T13:00:00", local: "Barcelona",       visitante: "Athletic Club" },
-    // --- Premier League (Jornada 1) ---
     { id: 17, liga: "Premier", inicio: "2026-08-21T13:00:00", local: "Arsenal",           visitante: "Coventry City" },
     { id: 18, liga: "Premier", inicio: "2026-08-22T05:30:00", local: "Hull City",         visitante: "Man United" },
     { id: 19, liga: "Premier", inicio: "2026-08-22T08:00:00", local: "Everton",           visitante: "Crystal Palace" },
@@ -47,7 +43,14 @@ const PARTIDOS = [
 
 const MAX_PARTIDOS = 8;
 
-// ===== Fecha legible y cierre de pronósticos =====
+// ===== Estado =====
+let PARTIDOS = [];
+let FECHA_LIMITE = null;
+let resultadosSemana = null;
+
+// ===== Utilidades =====
+const $ = (id) => document.getElementById(id);
+
 function formatearFecha(iso) {
     const d = new Date(iso);
     const dias = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -56,12 +59,54 @@ function formatearFecha(iso) {
     return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]} · ${hora}`;
 }
 
-// Los pronósticos cierran cuando inicia el primer partido de la jornada
-const FECHA_LIMITE = new Date(Math.min(...PARTIDOS.map(p => new Date(p.inicio).getTime())));
-const plazoCerrado = () => Date.now() >= FECHA_LIMITE.getTime();
+function aLocalInput(iso) {
+    const d = new Date(iso);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function getWeekId() {
+    const d = new Date();
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+const SEMANA = getWeekId();
+$("semana").textContent = `Semana: ${SEMANA}`;
+
+// ===== Carga de partidos de la semana desde Firestore =====
+async function cargarPartidosSemana() {
+    try {
+        const snap = await getDoc(doc(db, "semanas", SEMANA));
+        PARTIDOS = snap.exists() && Array.isArray(snap.data().partidos) ? snap.data().partidos : [];
+    } catch {
+        PARTIDOS = [];
+    }
+    recalcularFechaLimite();
+}
+
+function recalcularFechaLimite() {
+    FECHA_LIMITE = PARTIDOS.length
+        ? new Date(Math.min(...PARTIDOS.map(p => new Date(p.inicio).getTime())))
+        : null;
+    $("fecha-limite").textContent = FECHA_LIMITE
+        ? formatearFecha(FECHA_LIMITE.toISOString())
+        : "Por definir";
+}
+
+const plazoCerrado = () => FECHA_LIMITE && Date.now() >= FECHA_LIMITE.getTime();
 
 function actualizarCuentaRegresiva() {
     const el = $("cuenta-regresiva");
+    if (!FECHA_LIMITE) {
+        el.textContent = "Por definir (admin)";
+        el.className = "font-bold text-gray-400";
+        return;
+    }
     const diff = FECHA_LIMITE.getTime() - Date.now();
     if (diff <= 0) {
         el.textContent = "Plazo cerrado";
@@ -76,48 +121,41 @@ function actualizarCuentaRegresiva() {
     el.className = "font-bold text-green-400";
 }
 
-// ===== Utilidades =====
-function getWeekId() {
-    const d = new Date();
-    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    const dayNum = date.getUTCDay() || 7;
-    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-    const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-    return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
-}
-
-const SEMANA = getWeekId();
-let resultadosSemana = null;
-
-const $ = (id) => document.getElementById(id);
+// ===== Render de partidos en la tabla principal =====
 const contenedor = $("cuerpo-partidos");
 
-$("semana").textContent = `Semana: ${SEMANA}`;
-$("fecha-limite").textContent = formatearFecha(FECHA_LIMITE.toISOString());
-
-// ===== Render de partidos en tabla =====
-PARTIDOS.forEach(p => {
-    const row = document.createElement("tr");
-    row.className = "match-row";
-    row.dataset.id = p.id;
-    row.innerHTML = `
-        <td class="text-center">
-            <input type="checkbox" class="match-checkbox w-5 h-5" value="${p.id}">
-        </td>
-        <td><span class="text-xs font-bold text-blue-400">${p.liga}</span><div class="text-[10px] text-gray-500">${formatearFecha(p.inicio)}</div></td>
-        <td><span class="team-name">${p.local}</span></td>
-        <td>
-            <div class="flex items-center gap-1 justify-center">
-                <input type="number" class="w-12 bg-gray-700 text-center rounded score-l" disabled placeholder="0">
-                <span class="text-gray-500">-</span>
-                <input type="number" class="w-12 bg-gray-700 text-center rounded score-v" disabled placeholder="0">
-            </div>
-        </td>
-        <td><span class="team-name flex justify-end">${p.visitante}</span></td>
-    `;
-    contenedor.appendChild(row);
-});
+function renderPartidos() {
+    contenedor.innerHTML = "";
+    if (PARTIDOS.length === 0) {
+        contenedor.innerHTML = `
+            <tr><td colspan="5" class="py-6 text-center text-gray-400">
+                Aún no hay partidos cargados para esta semana.<br>
+                <span class="text-xs">El admin debe cargarlos en "Modo Admin".</span>
+            </td></tr>`;
+        return;
+    }
+    PARTIDOS.forEach(p => {
+        const row = document.createElement("tr");
+        row.className = "match-row";
+        row.dataset.id = p.id;
+        row.innerHTML = `
+            <td class="text-center">
+                <input type="checkbox" class="match-checkbox w-5 h-5" value="${p.id}">
+            </td>
+            <td><span class="text-xs font-bold text-blue-400">${p.liga}</span><div class="text-[10px] text-gray-500">${formatearFecha(p.inicio)}</div></td>
+            <td><span class="team-name">${p.local}</span></td>
+            <td>
+                <div class="flex items-center gap-1 justify-center">
+                    <input type="number" class="w-12 bg-gray-700 text-center rounded score-l" disabled placeholder="0">
+                    <span class="text-gray-500">-</span>
+                    <input type="number" class="w-12 bg-gray-700 text-center rounded score-v" disabled placeholder="0">
+                </div>
+            </td>
+            <td><span class="team-name flex justify-end">${p.visitante}</span></td>
+        `;
+        contenedor.appendChild(row);
+    });
+}
 
 // ===== Contador de seleccionados =====
 function contarSeleccionados() {
@@ -209,6 +247,8 @@ function mostrarMensaje(el, texto, tipo) {
 }
 
 $("btnEnviar").addEventListener("click", async () => {
+    if (!PARTIDOS.length) return mostrarMensaje($("mensaje"), "Aún no hay partidos cargados para esta semana", "error");
+    if (PARTIDOS.length < MAX_PARTIDOS) return mostrarMensaje($("mensaje"), `Se necesitan al menos ${MAX_PARTIDOS} partidos para jugar`, "error");
     if (plazoCerrado()) return mostrarMensaje($("mensaje"), "El plazo para enviar pronósticos ya cerró", "error");
     const nombre = $("userName").value.trim();
     const checkboxes = [...document.querySelectorAll(".match-checkbox:checked")];
@@ -262,7 +302,10 @@ function calcularPuntos(pred, res) {
 $("btnAdmin").addEventListener("click", () => {
     const panel = $("panel-admin");
     panel.classList.toggle("hidden");
-    if (!panel.classList.contains("hidden")) cargarEditorResultados();
+    if (!panel.classList.contains("hidden")) {
+        cargarEditorPartidos();
+        cargarEditorResultados();
+    }
 });
 
 function cargarEditorResultados() {
@@ -324,6 +367,85 @@ $("btnGuardarResultados").addEventListener("click", async () => {
         if (err.message === "invalid") return;
         $("mensaje-admin").textContent = "Error: " + err.message;
         $("mensaje-admin").className = "text-center text-sm mt-3 text-red-400";
+    }
+});
+
+// ===== Editor de partidos (Modo Admin) =====
+function agregarFilaEditor(m) {
+    const lista = $("lista-partidos-editor");
+    const fila = document.createElement("div");
+    fila.className = "editor-row bg-gray-700/40 border border-gray-700 rounded-lg p-2 flex flex-wrap gap-2 items-center";
+    fila.dataset.id = m ? m.id : Date.now();
+    fila.innerHTML = `
+        <input type="datetime-local" class="ed-inicio bg-gray-600 text-sm text-white rounded px-2 py-1" value="${m ? aLocalInput(m.inicio) : ""}">
+        <input type="text" class="ed-liga bg-gray-600 text-sm text-white rounded px-2 py-1 w-24" value="${m ? (m.liga || "") : ""}" placeholder="Liga">
+        <input type="text" class="ed-local bg-gray-600 text-sm text-white rounded px-2 py-1 flex-1 min-w-32" value="${m ? m.local : ""}" placeholder="Local">
+        <input type="text" class="ed-visitante bg-gray-600 text-sm text-white rounded px-2 py-1 flex-1 min-w-32" value="${m ? m.visitante : ""}" placeholder="Visitante">
+        <button class="ed-eliminar bg-red-500/20 text-red-300 text-sm font-bold px-3 py-1 rounded-lg">Eliminar</button>
+    `;
+    lista.appendChild(fila);
+}
+
+function cargarEditorPartidos() {
+    const lista = $("lista-partidos-editor");
+    lista.innerHTML = "";
+    if (PARTIDOS.length === 0) {
+        const btn = document.createElement("button");
+        btn.id = "btnCargarEjemplo";
+        btn.textContent = "Cargar jornada de ejemplo";
+        btn.className = "bg-blue-500/20 text-blue-300 text-sm font-bold py-2 px-4 rounded-lg";
+        btn.addEventListener("click", () => PARTIDOS_EJEMPLO.forEach(m => agregarFilaEditor(m)));
+        lista.appendChild(btn);
+    } else {
+        PARTIDOS.forEach(m => agregarFilaEditor(m));
+    }
+}
+
+$("lista-partidos-editor").addEventListener("click", (e) => {
+    const btn = e.target.closest(".ed-eliminar");
+    if (!btn) return;
+    btn.closest(".editor-row").remove();
+});
+
+$("btnAgregarPartido").addEventListener("click", () => agregarFilaEditor());
+
+function mostrarPartidos(texto, tipo) {
+    $("mensaje-partidos").textContent = texto;
+    $("mensaje-partidos").className = tipo === "ok"
+        ? "text-center text-sm mb-6 text-green-400"
+        : "text-center text-sm mb-6 text-red-400";
+}
+
+$("btnGuardarPartidos").addEventListener("click", async () => {
+    const filas = [...document.querySelectorAll("#lista-partidos-editor .editor-row")];
+    const partidos = [];
+    for (const fila of filas) {
+        const inicioVal = fila.querySelector(".ed-inicio").value;
+        const liga = fila.querySelector(".ed-liga").value.trim();
+        const local = fila.querySelector(".ed-local").value.trim();
+        const visitante = fila.querySelector(".ed-visitante").value.trim();
+        if (!inicioVal || !local || !visitante) {
+            return mostrarPartidos("Cada partido necesita fecha/hora, local y visitante", "error");
+        }
+        partidos.push({
+            id: Number(fila.dataset.id),
+            liga: liga || "Por definir",
+            inicio: new Date(inicioVal).toISOString(),
+            local,
+            visitante
+        });
+    }
+    if (partidos.length === 0) return mostrarPartidos("Agrega al menos un partido", "error");
+    if (partidos.length < MAX_PARTIDOS) return mostrarPartidos(`Se necesitan al menos ${MAX_PARTIDOS} partidos para jugar (tienes ${partidos.length})`, "error");
+
+    try {
+        await setDoc(doc(db, "semanas", SEMANA), { semana: SEMANA, actualizado: new Date(), partidos });
+        await cargarPartidosSemana();
+        renderPartidos();
+        actualizarCuentaRegresiva();
+        mostrarPartidos("¡Partidos guardados!", "ok");
+    } catch (err) {
+        mostrarPartidos("Error: " + err.message, "error");
     }
 });
 
@@ -427,6 +549,8 @@ async function renderTabla() {
 
 // ===== Inicialización =====
 (async function init() {
+    await cargarPartidosSemana();
+    renderPartidos();
     cargarBorrador();
     actualizarContador();
     actualizarCuentaRegresiva();

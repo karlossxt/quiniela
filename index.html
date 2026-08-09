@@ -69,6 +69,15 @@
         </div>
 
         <div id="panel-admin" class="hidden bg-gray-800 p-6 rounded-xl shadow-lg border border-yellow-600/50">
+            <h2 class="text-xl font-bold text-green-400 mb-2">Partidos de la semana</h2>
+            <p class="text-xs text-gray-400 mb-4">Carga los partidos de esta jornada. La semana se detecta sola; cada semana nueva este listado inicia vacío y el admin lo llena.</p>
+            <div id="lista-partidos-editor" class="flex flex-col gap-2 mb-3"></div>
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button id="btnAgregarPartido" class="bg-gray-700 hover:bg-gray-600 text-white text-sm font-bold py-2 px-4 rounded-lg">+ Agregar partido</button>
+                <button id="btnGuardarPartidos" class="bg-green-500 hover:bg-green-600 text-black text-sm font-bold py-2 px-4 rounded-lg">Guardar partidos</button>
+            </div>
+            <p id="mensaje-partidos" class="text-center text-sm mb-6"></p>
+
             <h2 class="text-xl font-bold text-yellow-400 mb-2">Resultados de la semana</h2>
             <p class="text-xs text-gray-400 mb-4">Captura los marcadores reales. Puntuación: marcador exacto = 3 pts, acierto de ganador o empate = 1 pt.</p>
             <div class="overflow-x-auto mb-4">

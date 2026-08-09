@@ -19,14 +19,14 @@ Quiniela web para grupos de amigos: cada participante elige **8 partidos** de la
 | `style.css` | Estilos personalizados (tema oscuro) |
 | `servidor.ps1` + `iniciar.bat` | Mini servidor local sin dependencias para pruebas (Windows) |
 
-## Cómo cambiar los partidos de la semana
-Edita el array `PARTIDOS` en `script.js`:
+## Cómo se cargan los partidos cada semana
+Los partidos viven en **Firestore** (colección `semanas`, un documento por semana). La semana se detecta sola (ID ISO semanal):
 
-```js
-{ id: 1, liga: "Liga MX", fecha: "Vie 23 Oct · 19:00", local: "Necaxa", visitante: "Toluca" },
-```
+1. El admin abre **"Modo Admin"** en la página.
+2. En **"Partidos de la semana"** agrega los partidos (fecha/hora, liga, local y visitante) o usa **"Cargar jornada de ejemplo"** para prellenar.
+3. Clic en **"Guardar partidos"**.
 
-La semana se detecta sola (ID ISO semanal), así que los datos se reinician cada semana sin tocar nada.
+Cuando llega una semana nueva, el listado inicia **vacío** y las posiciones en **cero**: solo hay que cargar los partidos nuevos desde la página, sin tocar código. El cierre de pronósticos se calcula del primer partido que inicia.
 
 ## Probar en local
 - **Windows:** doble clic en `iniciar.bat` y se abre `http://localhost:8000`
