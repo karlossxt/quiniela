@@ -64,6 +64,7 @@ const $ = (id) => document.getElementById(id);
 const contenedor = $("cuerpo-partidos");
 
 $("semana").textContent = `Semana: ${SEMANA}`;
+$("fecha-limite").textContent = PARTIDOS[0].fecha;
 
 // ===== Render de partidos en tabla =====
 PARTIDOS.forEach(p => {
