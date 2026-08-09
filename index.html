@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiniela Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="text-white min-h-screen p-4">
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-green-400">QUINIELA SEMANAL</h1>
+            <p class="text-gray-400">Elige exactamente 8 partidos y anota el marcador</p>
+            <div id="semana" class="inline-block mt-3 text-xs font-bold text-gray-300 bg-gray-800 px-3 py-1 rounded-full border border-gray-700"></div>
+        </header>
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-8 border border-gray-700">
+            <label class="block mb-2 font-bold">Tu Nombre:</label>
+            <input type="text" id="userName" class="w-full p-2 bg-gray-700 rounded border border-gray-600 mb-4" placeholder="Ej. Juan Pérez">
+
+            <div id="contador" class="text-sm mb-4 font-semibold"></div>
+
+            <div class="overflow-x-auto">
+                <table id="tabla-partidos" class="w-full">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Elegir</th>
+                            <th>Liga</th>
+                            <th>Local</th>
+                            <th class="text-center">Marcador</th>
+                            <th class="text-right">Visitante</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-partidos"></tbody>
+                </table>
+            </div>
+
+            <button id="btnEnviar" class="w-full mt-8 font-bold py-3 rounded-lg transition">
+                Enviar Pronósticos
+            </button>
+            <p id="mensaje" class="text-center text-sm mt-3"></p>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-8 border border-gray-700">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <h2 class="text-2xl font-bold">Tabla de Posiciones</h2>
+                <span id="estado-resultados" class="text-xs font-semibold"></span>
+            </div>
+            <div id="tabla-posiciones"></div>
+        </div>
+
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 text-center mb-4">
+            <button id="btnAdmin" class="text-xs text-gray-400 hover:text-gray-200 underline">Modo Admin (capturar resultados)</button>
+        </div>
+
+        <div id="panel-admin" class="hidden bg-gray-800 p-6 rounded-xl shadow-lg border border-yellow-600/50">
+            <h2 class="text-xl font-bold text-yellow-400 mb-2">Resultados de la semana</h2>
+            <p class="text-xs text-gray-400 mb-4">Captura los marcadores reales. Puntuación: marcador exacto = 3 pts, acierto de ganador o empate = 1 pt.</p>
+            <div class="overflow-x-auto mb-4">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>Liga</th>
+                            <th>Local</th>
+                            <th class="text-center">Resultado</th>
+                            <th class="text-right">Visitante</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-resultados"></tbody>
+                </table>
+            </div>
+            <button id="btnGuardarResultados" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 rounded-lg transition">Guardar Resultados</button>
+            <p id="mensaje-admin" class="text-center text-sm mt-3"></p>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
