@@ -335,16 +335,49 @@ async function renderTabla() {
 
     if (filas.length === 0) {
         cont.innerHTML = '<p class="text-gray-400 text-sm py-4">Aún no hay pronósticos esta semana.</p>';
+        $("ganador-semanal").innerHTML = "";
         return;
     }
 
-    const rows = filas.map((f, i) => `
-        <tr class="border-b border-gray-700">
-            <td class="py-2 px-2">${i + 1}</td>
-            <td class="py-2 px-2 font-semibold">${f.nombre}</td>
+    const ganador = $("ganador-semanal");
+    if (!resultadosSemana) {
+        ganador.innerHTML = "";
+    } else if (filas[0].puntos === 0) {
+        ganador.innerHTML = `
+            <div class="border border-gray-700 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400">Nadie acertó esta semana. ¡Ánimo para la próxima!</p>
+            </div>`;
+    } else {
+        const maxPuntos = filas[0].puntos;
+        const ganadores = filas.filter(f => f.puntos === maxPuntos);
+        if (ganadores.length === 1) {
+            const g = ganadores[0];
+            ganador.innerHTML = `
+                <div class="bg-gradient-to-r from-yellow-500/20 to-green-500/20 border border-yellow-500/60 rounded-xl p-4 text-center">
+                    <p class="text-xs font-bold tracking-widest text-yellow-400 uppercase">Ganador de la semana</p>
+                    <p class="text-3xl font-extrabold text-yellow-300 mt-1">${g.nombre}</p>
+                    <p class="text-sm text-gray-300 mt-1">${g.puntos} puntos · ${g.exactos} marcador${g.exactos === 1 ? "" : "es"} exacto${g.exactos === 1 ? "" : "s"}</p>
+                </div>`;
+        } else {
+            ganador.innerHTML = `
+                <div class="bg-gradient-to-r from-yellow-500/20 to-green-500/20 border border-yellow-500/60 rounded-xl p-4 text-center">
+                    <p class="text-xs font-bold tracking-widest text-yellow-400 uppercase">Empate por el primer lugar</p>
+                    <p class="text-xl font-extrabold text-yellow-300 mt-1">${ganadores.map(g => g.nombre).join(" · ")}</p>
+                    <p class="text-sm text-gray-300 mt-1">${maxPuntos} puntos cada uno</p>
+                </div>`;
+        }
+    }
+
+    const rows = filas.map((f, i) => {
+        const esGanador = resultadosSemana && filas[0].puntos > 0 && f.puntos === filas[0].puntos;
+        return `
+        <tr class="border-b border-gray-700 ${esGanador ? "bg-yellow-500/10" : ""}">
+            <td class="py-2 px-2 font-bold ${esGanador ? "text-yellow-300" : ""}">${i + 1}</td>
+            <td class="py-2 px-2 font-semibold ${esGanador ? "text-yellow-300" : ""}">${f.nombre}${esGanador ? " <span class=\"text-[10px] font-bold tracking-widest text-yellow-400 uppercase align-middle\">· Ganador</span>" : ""}</td>
             <td class="py-2 px-2 text-center">${f.exactos}</td>
-            <td class="py-2 px-2 text-center text-green-400 font-bold">${f.puntos}</td>
-        </tr>`).join("");
+            <td class="py-2 px-2 text-center font-bold ${esGanador ? "text-yellow-300" : "text-green-400"}">${f.puntos}</td>
+        </tr>`;
+    }).join("");
 
     cont.innerHTML = `
         <table class="w-full">
