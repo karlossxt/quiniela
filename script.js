@@ -16,35 +16,65 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // ===== 1. EDITA ESTA LISTA CADA SEMANA =====
+// `inicio` es la fecha/hora real del partido (formato ISO). La etiqueta visible se genera sola.
 const PARTIDOS = [
     // --- Liga MX ---
-    { id: 1,  liga: "Liga MX", fecha: "Vie 23 Oct · 19:00", local: "Necaxa",         visitante: "Toluca" },
-    { id: 2,  liga: "Liga MX", fecha: "Vie 23 Oct · 21:00", local: "América",        visitante: "Cruz Azul" },
-    { id: 3,  liga: "Liga MX", fecha: "Sáb 24 Oct · 19:00", local: "León",           visitante: "Toluca" },
-    { id: 4,  liga: "Liga MX", fecha: "Sáb 24 Oct · 19:00", local: "Monterrey",      visitante: "Chivas" },
-    { id: 5,  liga: "Liga MX", fecha: "Sáb 24 Oct · 21:00", local: "Pumas",          visitante: "Tigres" },
-    { id: 6,  liga: "Liga MX", fecha: "Dom 25 Oct · 17:00", local: "Atlas",          visitante: "Puebla" },
-    { id: 7,  liga: "Liga MX", fecha: "Dom 25 Oct · 17:00", local: "América",        visitante: "Pachuca" },
-    { id: 8,  liga: "Liga MX", fecha: "Dom 25 Oct · 19:00", local: "Querétaro",      visitante: "Juárez" },
-    { id: 9,  liga: "Liga MX", fecha: "Dom 25 Oct · 21:00", local: "Tijuana",        visitante: "Santos Laguna" },
+    { id: 1,  liga: "Liga MX", inicio: "2026-10-23T19:00:00", local: "Necaxa",         visitante: "Toluca" },
+    { id: 2,  liga: "Liga MX", inicio: "2026-10-23T21:00:00", local: "América",        visitante: "Cruz Azul" },
+    { id: 3,  liga: "Liga MX", inicio: "2026-10-24T19:00:00", local: "León",           visitante: "Toluca" },
+    { id: 4,  liga: "Liga MX", inicio: "2026-10-24T19:00:00", local: "Monterrey",      visitante: "Chivas" },
+    { id: 5,  liga: "Liga MX", inicio: "2026-10-24T21:00:00", local: "Pumas",          visitante: "Tigres" },
+    { id: 6,  liga: "Liga MX", inicio: "2026-10-25T17:00:00", local: "Atlas",          visitante: "Puebla" },
+    { id: 7,  liga: "Liga MX", inicio: "2026-10-25T17:00:00", local: "América",        visitante: "Pachuca" },
+    { id: 8,  liga: "Liga MX", inicio: "2026-10-25T19:00:00", local: "Querétaro",      visitante: "Juárez" },
+    { id: 9,  liga: "Liga MX", inicio: "2026-10-25T21:00:00", local: "Tijuana",        visitante: "Santos Laguna" },
     // --- La Liga (Jornada 1) ---
-    { id: 10, liga: "La Liga", fecha: "Sáb 15 Ago · 11:30", local: "Deportivo Alavés", visitante: "Getafe" },
-    { id: 11, liga: "La Liga", fecha: "Sáb 15 Ago · 13:30", local: "Sevilla",         visitante: "Rayo Vallecano" },
-    { id: 12, liga: "La Liga", fecha: "Dom 16 Ago · 09:00", local: "Racing",          visitante: "Villarreal" },
-    { id: 13, liga: "La Liga", fecha: "Dom 16 Ago · 11:00", local: "Espanyol",        visitante: "Levante" },
-    { id: 14, liga: "La Liga", fecha: "Dom 16 Ago · 13:30", local: "Celta de Vigo",   visitante: "Osasuna" },
-    { id: 15, liga: "La Liga", fecha: "Mié 26 Ago · 13:00", local: "Real Madrid",     visitante: "Real Sociedad" },
-    { id: 16, liga: "La Liga", fecha: "Jue 27 Ago · 13:00", local: "Barcelona",       visitante: "Athletic Club" },
+    { id: 10, liga: "La Liga", inicio: "2026-08-15T11:30:00", local: "Deportivo Alavés", visitante: "Getafe" },
+    { id: 11, liga: "La Liga", inicio: "2026-08-15T13:30:00", local: "Sevilla",         visitante: "Rayo Vallecano" },
+    { id: 12, liga: "La Liga", inicio: "2026-08-16T09:00:00", local: "Racing",          visitante: "Villarreal" },
+    { id: 13, liga: "La Liga", inicio: "2026-08-16T11:00:00", local: "Espanyol",        visitante: "Levante" },
+    { id: 14, liga: "La Liga", inicio: "2026-08-16T13:30:00", local: "Celta de Vigo",   visitante: "Osasuna" },
+    { id: 15, liga: "La Liga", inicio: "2026-08-26T13:00:00", local: "Real Madrid",     visitante: "Real Sociedad" },
+    { id: 16, liga: "La Liga", inicio: "2026-08-27T13:00:00", local: "Barcelona",       visitante: "Athletic Club" },
     // --- Premier League (Jornada 1) ---
-    { id: 17, liga: "Premier", fecha: "Vie 21 Ago · 13:00", local: "Arsenal",           visitante: "Coventry City" },
-    { id: 18, liga: "Premier", fecha: "Sáb 22 Ago · 05:30", local: "Hull City",         visitante: "Man United" },
-    { id: 19, liga: "Premier", fecha: "Sáb 22 Ago · 08:00", local: "Everton",           visitante: "Crystal Palace" },
-    { id: 20, liga: "Premier", fecha: "Dom 23 Ago · 07:00", local: "Man City",          visitante: "Bournemouth" },
-    { id: 21, liga: "Premier", fecha: "Dom 23 Ago · 09:30", local: "Newcastle",         visitante: "Liverpool" },
-    { id: 22, liga: "Premier", fecha: "Lun 24 Ago · 13:00", local: "Fulham",            visitante: "Chelsea" }
+    { id: 17, liga: "Premier", inicio: "2026-08-21T13:00:00", local: "Arsenal",           visitante: "Coventry City" },
+    { id: 18, liga: "Premier", inicio: "2026-08-22T05:30:00", local: "Hull City",         visitante: "Man United" },
+    { id: 19, liga: "Premier", inicio: "2026-08-22T08:00:00", local: "Everton",           visitante: "Crystal Palace" },
+    { id: 20, liga: "Premier", inicio: "2026-08-23T07:00:00", local: "Man City",          visitante: "Bournemouth" },
+    { id: 21, liga: "Premier", inicio: "2026-08-23T09:30:00", local: "Newcastle",         visitante: "Liverpool" },
+    { id: 22, liga: "Premier", inicio: "2026-08-24T13:00:00", local: "Fulham",            visitante: "Chelsea" }
 ];
 
 const MAX_PARTIDOS = 8;
+
+// ===== Fecha legible y cierre de pronósticos =====
+function formatearFecha(iso) {
+    const d = new Date(iso);
+    const dias = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const hora = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]} · ${hora}`;
+}
+
+// Los pronósticos cierran cuando inicia el primer partido de la jornada
+const FECHA_LIMITE = new Date(Math.min(...PARTIDOS.map(p => new Date(p.inicio).getTime())));
+const plazoCerrado = () => Date.now() >= FECHA_LIMITE.getTime();
+
+function actualizarCuentaRegresiva() {
+    const el = $("cuenta-regresiva");
+    const diff = FECHA_LIMITE.getTime() - Date.now();
+    if (diff <= 0) {
+        el.textContent = "Plazo cerrado";
+        el.className = "font-bold text-red-400";
+        return;
+    }
+    const dias = Math.floor(diff / 86400000);
+    const horas = Math.floor((diff % 86400000) / 3600000);
+    const minutos = Math.floor((diff % 3600000) / 60000);
+    const segundos = Math.floor((diff % 60000) / 1000);
+    el.textContent = `${dias}d ${horas}h ${minutos}m ${segundos}s`;
+    el.className = "font-bold text-green-400";
+}
 
 // ===== Utilidades =====
 function getWeekId() {
@@ -64,7 +94,7 @@ const $ = (id) => document.getElementById(id);
 const contenedor = $("cuerpo-partidos");
 
 $("semana").textContent = `Semana: ${SEMANA}`;
-$("fecha-limite").textContent = PARTIDOS[0].fecha;
+$("fecha-limite").textContent = formatearFecha(FECHA_LIMITE.toISOString());
 
 // ===== Render de partidos en tabla =====
 PARTIDOS.forEach(p => {
@@ -75,7 +105,7 @@ PARTIDOS.forEach(p => {
         <td class="text-center">
             <input type="checkbox" class="match-checkbox w-5 h-5" value="${p.id}">
         </td>
-        <td><span class="text-xs font-bold text-blue-400">${p.liga}</span><div class="text-[10px] text-gray-500">${p.fecha}</div></td>
+        <td><span class="text-xs font-bold text-blue-400">${p.liga}</span><div class="text-[10px] text-gray-500">${formatearFecha(p.inicio)}</div></td>
         <td><span class="team-name">${p.local}</span></td>
         <td>
             <div class="flex items-center gap-1 justify-center">
@@ -179,6 +209,7 @@ function mostrarMensaje(el, texto, tipo) {
 }
 
 $("btnEnviar").addEventListener("click", async () => {
+    if (plazoCerrado()) return mostrarMensaje($("mensaje"), "El plazo para enviar pronósticos ya cerró", "error");
     const nombre = $("userName").value.trim();
     const checkboxes = [...document.querySelectorAll(".match-checkbox:checked")];
 
@@ -244,7 +275,7 @@ function cargarEditorResultados() {
         const row = document.createElement("tr");
         row.className = "match-row";
         row.innerHTML = `
-            <td><span class="text-xs font-bold text-blue-400">${p.liga}</span><div class="text-[10px] text-gray-500">${p.fecha}</div></td>
+            <td><span class="text-xs font-bold text-blue-400">${p.liga}</span><div class="text-[10px] text-gray-500">${formatearFecha(p.inicio)}</div></td>
             <td><span class="team-name">${p.local}</span></td>
             <td>
                 <div class="flex items-center gap-1 justify-center">
@@ -398,6 +429,13 @@ async function renderTabla() {
 (async function init() {
     cargarBorrador();
     actualizarContador();
+    actualizarCuentaRegresiva();
+    setInterval(actualizarCuentaRegresiva, 1000);
+    if (plazoCerrado()) {
+        const btn = $("btnEnviar");
+        btn.disabled = true;
+        btn.textContent = "Plazo cerrado";
+    }
     await cargarResultadosSemana();
     await renderTabla();
     onSnapshot(query(collection(db, "pronosticos"), where("semana", "==", SEMANA)), () => renderTabla());
